@@ -1,5 +1,7 @@
 -- Exercise 1
 
+section ex1
+
 variables p q r : Prop
 
 -- commutativity of ∧ and ∨
@@ -125,7 +127,8 @@ have factorization : (p → r) ∧ (q → r) → ((p ∨ q) → r), from (
 show ((p ∨ q) → r) ↔ (p → r) ∧ (q → r), from iff.intro expansion factorization
 
 
-example : ¬(p ∨ q) ↔ ¬p ∧ ¬q :=
+-- de morgan disjunction
+def de_morgan_disjunction : ¬(p ∨ q) ↔ ¬p ∧ ¬q :=
 have left_to_right : ¬(p ∨ q) → ¬p ∧ ¬q, from (
     assume not_p_or_q,
     and.intro
@@ -136,6 +139,8 @@ have right_to_left : ¬p ∧ ¬q → ¬(p ∨ q), from (
     λ not_p_and_not_q, not.intro (λ p_or_q, or.elim p_or_q (λ hp, not_p_and_not_q.left hp) (λ hq, not_p_and_not_q.right hq))
 ),
 show ¬(p ∨ q) ↔ ¬p ∧ ¬q, from iff.intro left_to_right right_to_left
+
+example : ¬(p ∨ q) ↔ ¬p ∧ ¬q := @de_morgan_disjunction p q
 
 
 example : ¬p ∨ ¬q → ¬(p ∧ q) := λ not_p_or_not_q,
@@ -175,7 +180,6 @@ have false_implies_p_and_false : false → (p ∧ false), from false.elim,
 show p ∧ false ↔ false, from iff.intro p_and_false_implies_false false_implies_p_and_false
 
 
--- I had to look this one up.
 example : ¬(p ↔ ¬p) := @not.intro (p ↔ ¬p) (
     assume p_iff_not_p : p ↔ ¬p,
     have hnp : ¬p, from (
@@ -187,49 +191,53 @@ example : ¬(p ↔ ¬p) := @not.intro (p ↔ ¬p) (
     show false, from absurd hp hnp
 )
 
---     have p_implies_not_p : (p → ¬p), from iff.elim_left p_iff_not_p,
---     have not_p_implies_p : (¬p → p), from iff.elim_right p_iff_not_p,
---     have id_violation : ¬(p → p) from sorry,
---     -- have not_p_implies_not_p : ¬(p → ¬p), from not.intro (
---     --     λ p_to_not_p, sorry
---     -- ),
---     show false, from absurd id id_violation
--- )
-
--- have p_to_np_is_nonsense : Π (p : Prop), (p → ¬p) → false, from (
---     assume hp, λ ptonp,
---     and.
---     absurd hp (ptonp hp)
--- )
-
--- not.intro(
---     assume p_iff_not_p : (p ↔ ¬p),
---     -- Prove p *and* not p
---     have contradiction : p ∧ ¬p, from (
---         λ (hp : p) np, and.intro
---         iff.elim (λ ptnp nptp, ptnp (nptp sorry)) p_iff_not_p
---     )
---     show false, from absurd contradiction.left contradiction.right
---     -- assume hp : p,
---     -- have makes_no_sense : false, from absurd hp (iff.elim_left p_iff_not_p hp)
---     -- show ¬(p ↔ ¬p), from false.elim makes_no_sense
--- )
--- not.intro (
---     assume p_iff_not_p,
---     sorry
-
---     -- have p_to_not_p : (p → ¬p), from iff.elim_,
---     -- have not_p_to_p : (¬p → p), from sorry,
---     -- show false, from sorry
-
---     -- have eliminator : (p → ¬p) → (¬p → p) → false, from (
---     --     λ p_np np_p, sorry
---     -- )
---     -- show false, from iff.elim eliminator p_iff_not_p
---     -- -- have p_implies_not_p : (p → ¬p), from iff.elim_left p_iff_not_p,
---     -- -- have not_p_implies_p : (¬p → p), from iff.elim_right p_iff_not_p,
---     -- -- show false, from sorry
--- )
-
 example : (p → q) → (¬q → ¬p) :=
 λ (hpq : p → q), λ (nq : ¬q), not.intro (λ hp, absurd (hpq hp) nq)
+
+end ex1
+
+-- Exercize 2
+section ex2
+    open classical
+
+    variables p q r s : Prop
+
+
+    example : (p → r ∨ s) → ((p → r) ∨ (p → s)) :=
+    assume p_to_r_or_s : p → r ∨ s,
+    -- assume hp : p,
+    -- have r_or_s : r ∨ s, from p_to_r_or_s hp,
+    sorry
+
+    -- de morgan conjunction
+    example : ¬(p ∧ q) → ¬p ∨ ¬q :=
+    assume npandq : ¬(p ∧ q),
+    by_contradiction (
+        assume hno : ¬(¬p ∨ ¬q),
+        have transformed : Π p₁ q₁, ¬(¬p₁ ∨ ¬q₁) → (¬p₁ ∧ ¬q₁), from λ l, iff.elim_left de_morgan_disjunction l
+        -- have hdm : ¬p ∧ ¬q, from (iff.elim_left de_morgan_disjunction hno),
+        sorry
+    )
+
+    example : ¬(p → q) → p ∧ ¬q :=
+    assume h : ¬(p → q),
+    sorry
+
+
+    example : (p → q) → (¬p ∨ q) :=
+    assume p_implies_q : p → q,
+    sorry
+
+
+    example : (¬q → ¬p) → (p → q) :=
+    assume not_q_to_not_p : ¬q → ¬p,
+    assume hp : p,
+    sorry
+
+    example : p ∨ ¬p := @em p
+
+    example : (((p → q) → p) → p) :=
+    assume p_implies_q_implies_p : ((p → q) → p),
+    sorry
+
+end ex2
