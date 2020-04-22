@@ -1,12 +1,16 @@
+ def Do_Twice : ((ℕ → ℕ) → (ℕ → ℕ)) → (ℕ → ℕ) → (ℕ → ℕ) := λ doubler, λ original, doubler $ doubler original
+
+
 -- Exercise 1
 
-def do_twice (f : ℕ → ℕ ) (x : ℕ) : ℕ := f (f x)
+def do_twice (f : ℕ → ℕ) (x : ℕ) : ℕ := f (f x)
+def double (n : ℕ) : ℕ := n * 2
 
 -- test
-def doubling_two_twice : ℕ := do_twice (λ (x: ℕ), x * 2) 2
+def doubling_two_twice : ℕ := do_twice double 2
 
 #reduce doubling_two_twice
-
+#reduce Do_Twice do_twice double 2
 
 -- Exercise 2
 
