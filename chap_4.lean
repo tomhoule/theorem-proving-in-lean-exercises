@@ -70,3 +70,17 @@ namespace ex2
     example : (∀ x, r → p x) ↔ (r → ∀ x, p x) := proof3 α p r
 
 end ex2
+
+namespace ex3
+
+    variables (men : Type) (barber : men)
+    variable  (shaves : men → men → Prop)
+
+    example (h : ∀ x : men, shaves barber x ↔ ¬ shaves x x) : false :=
+    have h1 : shaves barber barber → ¬ shaves barber barber, from iff.elim_left $ h barber,
+    have h2 : ¬ shaves barber barber → shaves barber barber, from iff.elim_right $ h barber,
+    have nsbb : ¬shaves barber barber, from λ hsbb : shaves barber barber, absurd hsbb (h1 hsbb),
+    have sbb : shaves barber barber, from h2 nsbb,
+    absurd sbb nsbb
+
+end ex3
