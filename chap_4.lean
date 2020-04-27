@@ -84,3 +84,52 @@ namespace ex3
     absurd sbb nsbb
 
 end ex3
+
+namespace ex4
+    namespace hidden
+
+        def divides (m n : ℕ) : Prop := ∃ k, m * k = n
+
+        instance : has_dvd nat := ⟨divides⟩
+
+        def even (n : ℕ) : Prop := 2 ∣ n -- You can enter the '∣' character by typing \mid
+
+        section
+            variables m n : ℕ
+
+            #check m ∣ n
+            #check m^n
+            #check even (m^n + 3)
+        end
+
+    end hidden
+
+    def prime (n : ℕ) : Prop := n > 1 ∧ ¬   (∃ m : ℕ, m < n ∧ hidden.divides m n)
+
+    def infinitely_many_primes : Prop := ∀ n : ℕ,
+        prime n ∧ (∃ m : ℕ, prime m ∧ n < m)
+        ∨ ¬(prime n)
+
+    def Fermat_prime (n : ℕ) : Prop := prime n ∧ n > 2 ∧ (∃ k : ℕ , (2^k + 1) = n)
+
+    def infinitely_many_Fermat_primes : Prop := ∀ n : ℕ,
+        (Fermat_prime n ∧ (∃ m : ℕ, Fermat_prime m ∧ m > n))
+        ∨ ¬(Fermat_prime n)
+
+    def goldbach_conjecture : Prop := ∀ n : ℕ,
+    n < 2
+    ∨ ¬(hidden.even n)
+    ∨ ∃ a b : ℕ, prime a ∧ prime b ∧ (a + b = n)
+
+    -- Every odd number greater than 5 can be expressed as the sum of three primes. (A prime may be used more than once in the same sum.)
+    -- https://en.wikipedia.org/wiki/Goldbach%27s_weak_conjecture
+    def Goldbach's_weak_conjecture : Prop := ∀ n : ℕ,
+    n < 5
+    ∨ hidden.even n
+    ∨ (∃ a b c : ℕ, prime a ∧ prime b ∧ prime c ∧ a + b + c = n )
+
+    def Fermat's_last_theorem : Prop := ∀ n : ℕ,
+    n ≤ 2
+    ∨ ¬(∃ a b c : ℕ, a^n + b^n = c^n)
+
+end ex4
