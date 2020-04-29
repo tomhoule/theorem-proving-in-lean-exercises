@@ -133,3 +133,160 @@ namespace ex4
     ∨ ¬(∃ a b c : ℕ, a^n + b^n = c^n)
 
 end ex4
+
+namespace ex5
+    open classical
+
+    variables (α : Type) (p q : α → Prop)
+    variable a : α
+    variable r : Prop
+
+    def pikachu (h : ∃ x : α, r) : r :=
+    match h with ⟨hx, hr⟩ := hr end
+
+    def raichu (hr : r) : (∃ x : α, r) := exists.intro a hr
+
+    def pichu : (∃ x, p x ∧ r) ↔ (∃ x, p x) ∧ r :=
+    have left : (∃ x, p x ∧ r) → (∃ x, p x) ∧ r, from
+        assume h : (∃ x, p x ∧ r),
+        match h with ⟨hx, h1⟩ :=
+            and.intro (⟨hx, h1.left⟩) h1.right
+        end,
+    have right : (∃ x, p x) ∧ r → (∃ x, p x ∧ r), from
+        assume h,
+        match h.left with ⟨hx, hpx⟩ :=
+            ⟨hx, and.intro hpx h.right⟩
+        end,
+    ⟨left, right⟩
+
+    def jesse : (∃ x, p x ∨ q x) ↔ (∃ x, p x) ∨ (∃ x, q x) :=
+    have left : (∃ x, p x ∨ q x) → (∃ x, p x) ∨ (∃ x, q x),from
+        assume ⟨hx, h1⟩,
+        or.elim h1 (λ hpx, or.inl ⟨hx, hpx⟩) (λ hqx, or.inr ⟨hx, hqx⟩),
+    have right : (∃ x, p x) ∨ (∃ x, q x) → (∃ x, p x ∨ q x), from
+        assume h,
+        or.elim h (λ ⟨hx, hpx⟩, ⟨hx, or.inl hpx⟩) (λ ⟨hx, hqx⟩, ⟨hx, or.inr hqx⟩),
+    ⟨left, right⟩
+
+    -- May require classical reasoning
+    def james : (∀ x, p x) ↔ ¬ (∃ x, ¬ p x) :=
+    have left : (∀ x, p x) → ¬ (∃ x, ¬ p x), from
+        assume h1,
+        assume h2 : (∃ x, ¬ p x),
+        have ¬ (∀ x, p x), from
+            match h2 with ⟨hx, hnpx⟩ :=
+                absurd (h1 hx) hnpx
+            end,
+        absurd h1 this,
+    have right : ¬ (∃ x, ¬ p x) → (∀ x, p x), from
+        assume h1,
+        λ hx, by_contradiction (λ hnpx, h1 ⟨hx, hnpx⟩),
+    ⟨left, right⟩
+
+    def team_rocket : (∃ x, p x) ↔ ¬ (∀ x, ¬ p x) :=
+    have left : (∃ x, p x) → ¬ (∀ x, ¬ p x), from
+        assume h1 h2,
+        match h1 with ⟨hx, hpx⟩ :=
+            absurd hpx (h2 hx)
+        end,
+    have right : ¬ (∀ x, ¬ p x) → (∃ x, p x), from
+        assume h,
+        sorry,
+    ⟨left, right⟩
+
+    def prepare_for_trouble : (¬ ∃ x, p x) ↔ (∀ x, ¬ p x) :=
+    have left : (¬ ∃ x, p x) → (∀ x, ¬ p x), from (
+        assume hne,
+        λ x, by_cases (λ (hpx : p x), absurd (⟨x, hpx⟩ : ∃ x, p x) hne) (λ hnpx, hnpx)
+    ),
+    have right : (∀ x, ¬ p x) → (¬ ∃ x, p x), from
+        assume h1 h2,
+        match h2 with ⟨hx, hpx⟩ := absurd hpx (h1 hx) end,
+    ⟨left, right⟩
+
+    def make_it_double : (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) :=
+    have left : ¬(∀ x, p x) → (∃ x, ¬ p x), from
+        assume h,
+        by_contradiction (
+            λ hfa,
+            sorry
+        ),
+    have right : (∃ x, ¬ p x) → ¬(∀ x, p x), from
+        assume h,
+        match h with ⟨hx, hnpx⟩ :=
+            λ h2, absurd (h2 hx) hnpx
+        end,
+    ⟨left, right⟩
+
+    def to_protect_the_world : (∀ x, p x → r) ↔ (∃ x, p x) → r :=
+    have left : (∀ x, p x → r) → (∃ x, p x) → r, from
+        assume h hpx,
+        match hpx with ⟨hx, hpx⟩ := h _ hpx end,
+    have right : ((∃ x, p x) → r) → (∀ x, p x → r), from
+        assume h,
+        λ hx hpx, h $ ⟨hx, hpx⟩,
+    ⟨left, right⟩
+
+    -- See the book: we need the assumption that α is nonempty here (a)
+    def from_devastation : (∃ x, p x → r) ↔ ((∀ x, p x) → r) :=
+    have left : (∃ x, p x → r) → ((∀ x, p x) → r), from
+        assume h1 h2,
+            match h1 with ⟨hx, hpxtor⟩ :=
+                hpxtor (h2 hx)
+            end,
+    have right : ((∀ x : α, p x) → r) → (∃ x : α, p x → r), from
+        assume h,
+            -- Had too look up that part from the book
+            by_cases
+                (λ hap : (∀ x : α, p x), ⟨a, λ _hleft, h hap⟩)
+                (λ hnap : ¬(∀ x : α, p x),
+                    by_contradiction (
+                        λ hnex : ¬ ∃ x, p x → r,
+                        have hap : ∀ x, p x, from (
+                            assume x : α,
+                            by_contradiction (
+                                assume hnp : ¬ p x,
+                                    have hex : ∃ x, p x → r,
+                                    from ⟨x, (assume hp, absurd hp hnp)⟩,
+                                    show false, from hnex hex
+                            )
+                        ),
+                        show false, from hnap hap
+                    )
+                ),
+    ⟨left, right⟩
+
+    -- See the book: we need the assumption that α is nonempty here (a)
+    def to_unite_all_peoples : (∃ x, r → p x) ↔ (r → ∃ x, p x) :=
+    have left : (∃ x, r → p x) → (r → ∃ x, p x), from
+        assume h hr,
+        match h with ⟨hx, hrpx⟩ :=
+            ⟨hx, hrpx hr⟩
+        end,
+    have right : (r → ∃ x, p x) → (∃ x, r → p x), from
+        assume h,
+        have left : α, from a,
+        have right : r → p left, from λ hr, sorry,
+        ⟨left, right⟩,
+    ⟨left, right⟩
+
+    -- =============
+    -- === Goals ===
+    -- =============
+
+    example : (∃ x : α, r) → r := pikachu α r
+    example : r → (∃ x : α, r) := raichu α a r
+    example : (∃ x, p x ∧ r) ↔ (∃ x, p x) ∧ r := pichu α p r
+    example : (∃ x, p x ∨ q x) ↔ (∃ x, p x) ∨ (∃ x, q x) := jesse α p q
+
+    example : (∀ x, p x) ↔ ¬ (∃ x, ¬ p x) := james α p
+    example : (∃ x, p x) ↔ ¬ (∀ x, ¬ p x) := team_rocket α p
+    example : (¬ ∃ x, p x) ↔ (∀ x, ¬ p x) := prepare_for_trouble α p
+    example : (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) := make_it_double α p
+
+    example : (∀ x, p x → r) ↔ (∃ x, p x) → r := to_protect_the_world α p r
+    -- See the book: we need the assumption that α is nonempty here (a)
+    example : (∃ x, p x → r) ↔ (∀ x, p x) → r := from_devastation α p a r
+    example : (∃ x, r → p x) ↔ (r → ∃ x, p x) := to_unite_all_peoples α p a r
+
+end ex5
