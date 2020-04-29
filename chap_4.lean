@@ -183,6 +183,12 @@ namespace ex5
         λ hx, by_contradiction (λ hnpx, h1 ⟨hx, hnpx⟩),
     ⟨left, right⟩
 
+    theorem dne {p : Prop} (h : ¬¬p) : p :=
+    or.elim (em p)
+    (assume hp : p, hp)
+    (assume hnp : ¬p, absurd hnp h)
+
+
     def team_rocket : (∃ x, p x) ↔ ¬ (∀ x, ¬ p x) :=
     have left : (∃ x, p x) → ¬ (∀ x, ¬ p x), from
         assume h1 h2,
@@ -191,7 +197,13 @@ namespace ex5
         end,
     have right : ¬ (∀ x, ¬ p x) → (∃ x, p x), from
         assume h,
-        sorry,
+        by_contradiction (
+            λ hnex,
+            have (∀ x, ¬ p x), from (
+                λ x, by_contradiction (λ h2, absurd (⟨x, dne h2⟩ : (∃ x, p x)) hnex)
+            ),
+            absurd this h
+        ),
     ⟨left, right⟩
 
     def prepare_for_trouble : (¬ ∃ x, p x) ↔ (∀ x, ¬ p x) :=
