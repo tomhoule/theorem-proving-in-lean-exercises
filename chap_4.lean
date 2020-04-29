@@ -220,8 +220,13 @@ namespace ex5
     have left : ¬(∀ x, p x) → (∃ x, ¬ p x), from
         assume h,
         by_contradiction (
-            λ hfa,
-            sorry
+            λ hnex,
+            have (∀ x, p x), from (
+                λ hx, or.elim (em $p hx)
+                    (λ hphx, hphx)
+                    (λ hnphx, absurd (⟨hx, hnphx⟩ : ∃ x, ¬ p x) hnex)
+            ),
+            absurd this h
         ),
     have right : (∃ x, ¬ p x) → ¬(∀ x, p x), from
         assume h,
