@@ -282,9 +282,31 @@ namespace ex5
         end,
     have right : (r → ∃ x, p x) → (∃ x, r → p x), from
         assume h,
-        have left : α, from a,
-        have right : r → p left, from λ hr, sorry,
-        ⟨left, right⟩,
+        by_contradiction (
+            λ (hnex : ¬∃ x, r → p x),
+            have hx : α, from a,
+            have h1 : ∀ x, ¬(r → p x), from λ hx h2, hnex ⟨hx, h2⟩,
+            have h2 : ¬∃ x, p x, from (
+                assume hn : ∃ x, p x,
+                match hn with ⟨hx, hpx⟩ :=
+                    absurd (λ hr, hpx) (h1 hx)
+                end
+            ),
+            have h3 : r → ¬∃ x, p x, from λ hr, h2,
+            have h4 : r → ∀ x, ¬ p x, from λ hr, forall_not_of_not_exists $ h3 hr,
+            have ¬(r → ∃ x, p x), from (
+                assume h,
+                or.elim (em r)
+                    (λ hr,
+                    absurd (h hr) (h3 hr)
+                    )
+                    (λ hnr,
+                    have ∃ x, r → p x, from ⟨hx, λ hr, absurd hr hnr⟩,
+                    show false, from absurd this hnex
+                    )
+            ),
+            show false, from absurd h this
+        ),
     ⟨left, right⟩
 
     -- =============
