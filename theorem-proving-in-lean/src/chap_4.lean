@@ -364,7 +364,24 @@ namespace ex7
 
     #check sub_self
 
-    example (x : ℤ) : x * 0 = 0 :=
-    sorry
+    def sub_is_add_neg (x y : ℤ) : x - y = x + (-y) := eq.refl (x - y)
+
+    def sub_assoc (x y z: ℤ) : (y + x) - z = y + (x - z) :=
+    calc
+        (y + x) - z = y + x + -z : by rw sub_is_add_neg
+                ... = y + (x + -z) : by rw add_assoc
+                ... = y + (x - z) : by rw sub_is_add_neg
+
+    example (x : ℤ) : x * 0 = 0 := eq.symm $
+    calc
+        0   = x - x : eq.symm (sub_self x)
+        ... = (1 * x) - x : by rw one_mul
+        ... = (x * (1 + 0)) - x : by rw [mul_comm, add_zero]
+        ... = (x * 1 + x * 0) - x : by rw mul_add
+        ... = x + x * 0 - x : by rw [mul_one]
+        ... = (x * 0) + x - x : by rw [add_comm]
+        -- "by simp" also works, but I wanted to make sure I know how to prove it manually.
+        ... = x * 0 + (x - x) : by rw [sub_assoc]
+        ... = x * 0 : by rw [sub_self, add_zero]
 
 end ex7
