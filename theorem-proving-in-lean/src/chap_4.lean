@@ -351,7 +351,12 @@ namespace ex6
 
     theorem log_mul {x y : real} (hx : x > 0) (hy : y > 0) :
     log (x * y) = log x + log y :=
-    sorry
+    calc
+        log (x * y) = log (exp (log x) * exp (log y)) : by rw [exp_log_eq hx, exp_log_eq hy]
+                ... = log (exp (log x + log y)) : by rw exp_add
+                ... = log x + log y : by rw log_exp_eq
+
+    -- #print log_mul
 
 end ex6
 
