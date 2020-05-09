@@ -356,3 +356,23 @@ section chap4ex2
   end
 
 end chap4ex2
+
+section chap4ex3
+
+  variables (men : Type) (barber : men)
+  variable  (shaves : men → men → Prop)
+
+  example (h : ∀ x : men, shaves barber x ↔ ¬ shaves x x) : false :=
+  begin
+    have barber_case : shaves barber barber ↔ ¬ shaves barber barber, from h barber,
+    have barber_doesnt_shave_himself: ¬(shaves barber barber),
+      begin
+        intro h1,
+        have : ¬ shaves barber barber, from (iff.elim_left barber_case) h1,
+        contradiction
+      end,
+    have does_he_though : shaves barber barber, from (iff.elim_right barber_case) barber_doesnt_shave_himself,
+    contradiction
+  end
+
+end chap4ex3
