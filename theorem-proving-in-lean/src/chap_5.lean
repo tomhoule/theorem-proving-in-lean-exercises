@@ -376,3 +376,172 @@ section chap4ex3
   end
 
 end chap4ex3
+
+-- chap4ex4 doesn't involve any proof
+
+section chap4ex5
+
+  open classical
+
+  variables (α : Type) (p q : α → Prop)
+  variable a : α
+  variable r : Prop
+
+  include a
+
+  example : (∃ x : α, r) → r :=
+  begin
+    intro h,
+    cases h,
+    assumption
+  end
+
+  example : r → (∃ x : α, r) :=
+  begin
+    intro h,
+    constructor, exact a, exact h
+  end
+
+
+  example : (∃ x, p x ∧ r) ↔ (∃ x, p x) ∧ r :=
+  begin
+    apply iff.intro,
+    { intro h,
+      cases h with ha hconj,
+      constructor,
+      { existsi ha, exact hconj.left },
+      exact hconj.right },
+    intro h,
+    have ex : ∃ x, p x, from h.left,
+    cases ex with hx hpx,
+    existsi hx,
+    constructor,
+    { exact hpx },
+    exact h.right,
+  end
+
+  example : (∃ x, p x ∨ q x) ↔ (∃ x, p x) ∨ (∃ x, q x) :=
+  begin
+    apply iff.intro,
+    { intro h,
+      cases h with hx hdisj,
+      cases hdisj with hpx hqx,
+      { left, existsi hx, exact hpx },
+      right, existsi hx, exact hqx },
+    intro h,
+    cases h with hpx hqx,
+    { cases hpx with hx hpx', existsi hx, left, exact hpx' },
+    cases hqx with hx hqx', existsi hx, right, exact hqx'
+  end
+
+  def forall_px_not_exists_not_px : (∀ x, p x) ↔ ¬ (∃ x, ¬ p x) :=
+  begin
+    apply iff.intro,
+    { intros h hcon,
+      cases hcon with hx hnpx,
+      have hpx : p hx, from h hx,
+      contradiction },
+    intros h hx,
+    cases (classical.em (p hx)) with _ hnpx,
+    { show p hx, by assumption },
+    show p hx,
+    have : ∃ x, ¬p x, { existsi hx, exact hnpx },
+    contradiction
+  end
+
+  example : (∀ x, p x) ↔ ¬ (∃ x, ¬ p x) := @forall_px_not_exists_not_px α p a
+
+  def exists_p_x_not_forall_not_px : (∃ x, p x) ↔ ¬ (∀ x, ¬ p x) :=
+  begin
+    apply iff.intro,
+    { intros h hcon,
+      cases h with hx hpx,
+      have hnpx : ¬ p hx, { exact hcon hx },
+      contradiction },
+    show ¬(∀ x, ¬p x) → (∃ x, p x),
+    intro h,
+    cases (classical.em (∃ x, p x)) with _ hnex,
+    { assumption },
+    have hcont : ∀x, ¬p x, {
+        intros hx hpx,
+        have hex : ∃ x, p x, { existsi hx, exact hpx },
+        contradiction
+      },
+    contradiction
+  end
+
+  example : (∃ x, p x) ↔ ¬ (∀ x, ¬ p x) := @exists_p_x_not_forall_not_px α p a
+
+  example : (¬ ∃ x, p x) ↔ (∀ x, ¬ p x) :=
+  begin
+    apply iff.intro,
+    { intros h hx,
+      cases (em (p hx)) with hpx hnpx,
+      { have : ∃ x, p x, from ⟨hx, hpx⟩,
+        contradiction },
+      assumption },
+    intros h hcont,
+    cases hcont with hx hpx,
+    have nphx : ¬ p hx, from h hx,
+    contradiction
+  end
+
+  def not_forall_exists_not_equivalence : (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) :=
+  begin
+    apply iff.intro,
+    { intro h,
+      cases (em (p a)) with hpa hnpa,
+      { cases (em ∃ x, ¬ p x) with hexists hnexists,
+        { assumption },
+        have : ∀ x, p x, from iff.elim_right (@forall_px_not_exists_not_px α p a) hnexists,
+        contradiction },
+      existsi a, exact hnpa },
+    intros h hcont,
+    cases h with hx hnpx,
+    have hpx : p hx, from hcont hx,
+    contradiction
+  end
+
+  example : (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) := @not_forall_exists_not_equivalence α p a
+
+  example : (∀ x, p x → r) ↔ (∃ x, p x) → r :=
+  begin
+    apply iff.intro,
+    { intros h hex,
+      cases hex with hx hpx,
+      exact h hx hpx},
+    intros h hx hphx,
+    have : ∃ x, p x, from ⟨hx, hphx⟩,
+    exact h this
+  end
+
+  example : (∃ x, p x → r) ↔ (∀ x, p x) → r :=
+  begin
+    apply iff.intro,
+    { intros hex hfa,
+      cases hex with hx hphx,
+      have hhx : p hx, from hfa hx,
+      exact hphx hhx },
+    intros h,
+    cases (em (∀ (x : α), p x)) with hyes hno,
+    { existsi a, intro hpa, exact h hyes },
+    have : (∃ x, ¬ p x), from iff.elim_left (@not_forall_exists_not_equivalence α p a) hno,
+    cases this with hx hnpx,
+    existsi hx, intro hpx, contradiction
+  end
+
+  example : (∃ x, r → p x) ↔ (r → ∃ x, p x) :=
+  begin
+    apply iff.intro,
+    { intros hex hr,
+      cases hex with hx hrtopx,
+      existsi hx, exact hrtopx hr },
+    intro h,
+    cases (em r) with hr hnr,
+    { have : (∃ (x : α), p x), from h hr,
+      cases this with hx hpx,
+      existsi hx, intro hr, exact hpx },
+    existsi a, intro hr, contradiction
+  end
+
+end chap4ex5
