@@ -545,3 +545,47 @@ section chap4ex5
   end
 
 end chap4ex5
+
+section chap4ex6
+  variables (real : Type) [ordered_ring real]
+  variables (log exp : real → real)
+  variable  log_exp_eq : ∀ x, log (exp x) = x
+  variable  exp_log_eq : ∀ {x}, x > 0 → exp (log x) = x
+  variable  exp_pos    : ∀ x, exp x > 0
+  variable  exp_add    : ∀ x y, exp (x + y) = exp x * exp y
+
+  -- this ensures the assumptions are available in tactic proofs
+  include log_exp_eq exp_log_eq exp_pos exp_add
+
+  example (x y z : real) :
+    exp (x + y + z) = exp x * exp y * exp z :=
+  by rw [exp_add, exp_add]
+
+  example (y : real) (h : y > 0)  : exp (log y) = y :=
+  exp_log_eq h
+
+  theorem log_mul {x y : real} (hx : x > 0) (hy : y > 0) :
+    log (x * y) = log x + log y :=
+  let x := x, y := y in
+  begin
+    have s1 : log (x * y) = log (x * y), by reflexivity,
+    have s2 : log (x * y) = log (exp (log x) * (exp (log y))), by { rw (exp_log_eq hx), rw (exp_log_eq hy) },
+    have s3 : log (exp (log x) * (exp (log y))) = log (exp (log x + log y)), by { rw exp_add },
+    have s4 : log (exp (log x + log y)) = log x + log y, by rw log_exp_eq,
+    show log (x * y) = log x + log y, by rw [s1, s2, s3, s4],
+  end
+
+end chap4ex6
+
+section chap4ex7
+
+  #check sub_self
+
+  example (x : ℤ) : x * 0 = 0 :=
+  calc
+    x * 0 = 0 * x : by rw [mul_comm]
+      ... = (x - x) * x : by rw sub_self
+      ... = (x * x) - (x * x) : by rw sub_mul
+      ... = 0 : by rw sub_self
+
+end chap4ex7

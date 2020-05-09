@@ -372,6 +372,7 @@ namespace ex7
                 ... = y + (x + -z) : by rw add_assoc
                 ... = y + (x - z) : by rw sub_is_add_neg
 
+    -- See chap_5.lean for a shorter, cleaner solution
     example (x : ℤ) : x * 0 = 0 := eq.symm $
     calc
         0   = x - x : eq.symm (sub_self x)
