@@ -589,3 +589,11 @@ section chap4ex7
       ... = 0 : by rw sub_self
 
 end chap4ex7
+
+section chap5ex2
+
+  example (p q r : Prop) (hp : p) :
+  (p ∨ q ∨ r) ∧ (q ∨ p ∨ r) ∧ (q ∨ r ∨ p) :=
+  by repeat { constructor, repeat { { left, exact hp } <|> { right, left, exact hp } <|> { right, right, exact hp } } }
+
+end chap5ex2
