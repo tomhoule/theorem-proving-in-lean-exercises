@@ -281,3 +281,39 @@ section chap3ex3
   end
 
 end chap3ex3
+
+section chap4ex1
+
+  variables (α : Type) (p q : α → Prop)
+
+  example : (∀ x, p x ∧ q x) ↔ (∀ x, p x) ∧ (∀ x, q x) :=
+  begin
+    apply iff.intro,
+    { intro h,
+      constructor,
+      repeat {
+        intro ha,
+        let h1 := h ha,
+        exact h1.left <|> exact h1.right
+      }},
+    intros h ha,
+    constructor,
+    { exact h.left ha },
+    exact h.right ha
+  end
+
+  example : (∀ x, p x → q x) → (∀ x, p x) → (∀ x, q x) :=
+  begin
+    intros h1 h2 hx,
+    exact (h1 hx $ h2 hx)
+  end
+
+  example : (∀ x, p x) ∨ (∀ x, q x) → ∀ x, p x ∨ q x :=
+  begin
+    intros h1 hx,
+    cases h1 with hpx hqx,
+    { left, exact hpx hx },
+    right, exact hqx hx
+  end
+
+end chap4ex1
