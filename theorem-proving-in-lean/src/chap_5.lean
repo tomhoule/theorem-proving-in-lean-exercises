@@ -317,3 +317,42 @@ section chap4ex1
   end
 
 end chap4ex1
+
+section chap4ex2
+
+  variables (α : Type) (p q : α → Prop)
+  variable r : Prop
+
+  example : α → ((∀ x : α, r) ↔ r) :=
+  begin
+    intro ha,
+    apply iff.intro,
+    { intro hr, exact hr ha },
+    intros hr hx,
+    assumption
+  end
+
+  -- one branch requires classical logic
+  example : (∀ x, p x ∨ r) ↔ (∀ x, p x) ∨ r :=
+  begin
+    apply iff.intro,
+    { intros h,
+      cases (classical.em r) with hr hnr,
+      { right, assumption },
+      left,
+      intro hx,
+      cases (h hx), assumption, contradiction },
+    intros h hx,
+    cases h with hpx hr,
+    { left, exact hpx hx },
+    right, exact hr
+  end
+
+  example : (∀ x, r → p x) ↔ (r → ∀ x, p x) :=
+  begin
+    apply iff.intro,
+    { intros h hr hx, exact h hx hr },
+    intros h hx hr, exact (h hr) hx
+  end
+
+end chap4ex2
