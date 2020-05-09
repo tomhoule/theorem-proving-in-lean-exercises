@@ -191,3 +191,80 @@ section chap3ex1
 
 
 end chap3ex1
+
+section chap3ex2
+    open classical
+
+    variables p q r s : Prop
+
+    example : (p → r ∨ s) → ((p → r) ∨ (p → s)) :=
+    begin
+      intro h,
+      cases (em p) with hp hnp,
+      { cases (h hp) with hr hs,
+        { left, exact (λ hp, hr) },
+        right, exact (λ hp, hs)},
+      left,
+      intro hp,
+      contradiction
+    end
+
+    example : ¬(p ∧ q) → ¬p ∨ ¬q :=
+    begin
+      intro h,
+      cases (em p) with hp hnp,
+      { cases (em q) with hq hnq,
+        { exact (false.elim $ h ⟨hp, hq⟩) },
+        right, exact hnq },
+      left, exact hnp
+    end
+
+    example : ¬(p → q) → p ∧ ¬q :=
+    begin
+      intro h,
+      cases (em p) with hp hnp,
+      { cases (em q) with hq hnq,
+        { have  ptoq : (p → q), from λ hp, hq,
+          contradiction },
+        constructor, assumption, assumption },
+      cases (em q) with hq hnq,
+      { have ptoq : p → q, from λ hp, absurd hp hnp,
+        contradiction },
+      have ptoq : p → q, { intro hp, contradiction },
+      contradiction
+    end
+
+    example : (p → q) → (¬p ∨ q) :=
+    begin
+      intro h,
+      cases (em p) with hp hnp,
+      { right, exact h hp },
+      left, exact hnp
+    end
+
+    example : (¬q → ¬p) → (p → q) :=
+    begin
+      intro h,
+      cases (em q) with hq hnq,
+        { exact (λ hp, hq) },
+      have hnp : ¬p, from h hnq,
+      exact (λ hp, absurd hp hnp)
+    end
+
+    example : p ∨ ¬p :=
+    begin
+      cases (em p) with hp hnp,
+      { left, assumption },
+      right, assumption
+    end
+
+    example : (((p → q) → p) → p) :=
+    begin
+      intro h,
+      cases (em p) with hp hnp,
+      { assumption },
+      have ptoq : p → q, { intro hp, contradiction },
+      exact h ptoq
+    end
+
+end chap3ex2
