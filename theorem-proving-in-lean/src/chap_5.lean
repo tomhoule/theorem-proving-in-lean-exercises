@@ -268,3 +268,16 @@ section chap3ex2
     end
 
 end chap3ex2
+
+section chap3ex3
+
+  example { p : Prop } : ¬(p ↔ ¬p) :=
+  begin
+    intro h,
+    have nptop : ¬p → p, from iff.elim_right h,
+    have ptonp : p → ¬p, from iff.elim_left h,
+    have np : ¬p, { intro hp, exact absurd hp (ptonp hp) },
+    exact absurd (nptop np) np
+  end
+
+end chap3ex3
