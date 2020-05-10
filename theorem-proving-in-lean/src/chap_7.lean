@@ -119,3 +119,20 @@ namespace ch7_section5
     theorem cons_increases_len_by_1 (a : α) (l : list α) : length (list.cons a l) = length l + 1 := by refl
 
 end ch7_section5
+
+section ch7_section7
+    universe u
+
+
+    theorem mysymm {α : Type u} {a b : α} (h : eq a b) : eq b a :=
+    eq.subst h (eq.refl a)
+
+    theorem mytrans {α : Type u} {a b c : α}
+    (h₁ : eq a b) (h₂ : eq b c) : eq a c :=
+    eq.rec_on h₂ h₁
+
+    theorem mycongr {α β : Type u} {a b : α} (f : α → β)
+    (h : eq a b) : eq (f a) (f b) :=
+    eq.rec_on h rfl
+
+end ch7_section7
