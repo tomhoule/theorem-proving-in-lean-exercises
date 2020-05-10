@@ -64,3 +64,25 @@ namespace chap7_section2
         λ hib, inhabited.mk $ λ a, hib.default
 
 end chap7_section2
+
+namespace ch7_section5
+    open list
+
+    variables { α : Type }
+
+    theorem append_nil (t : list α) : t ++ nil = t := sorry
+
+    theorem append_assoc (r s t : list α) :
+    r ++ s ++ t = r ++ (s ++ t) := sorry
+
+    -- > Try also defining the function length : Π {α : Type u}, list α → nat that returns the
+    -- > length of a list, and prove that it behaves as expected (for example, length (s ++ t) =
+    -- > length s + length t).
+
+    def length : list α → ℕ := sorry
+
+    theorem length_of_nil_is_zero : length (@nil α) = 0 := sorry
+    theorem append_length (l1 l2 : list α) : length (l1 ++ l2) = (length l1) + length (l2) := sorry
+    theorem cons_increases_len_by_1 (a : α) (l : list α) : length (cons a l) = length l + 1 := sorry
+
+end ch7_section5
