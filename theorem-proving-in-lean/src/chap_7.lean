@@ -66,23 +66,56 @@ namespace chap7_section2
 end chap7_section2
 
 namespace ch7_section5
-    open list
-
+    universe u
     variables { α : Type }
 
-    theorem append_nil (t : list α) : t ++ nil = t := sorry
+    open list
+
+    theorem append_nil (t : list α) : t ++ nil = t :=
+    list.rec_on
+        t
+        (show nil ++ nil = nil, from nil_append (@nil α))
+        (λ (hd: α) (tl: list α) (acc : tl ++ nil = tl),
+            have e1 : hd::tl ++ nil = hd::(tl ++ nil), from cons_append hd tl nil,
+            have e2 : hd::(tl ++ nil) = hd::tl, by rw [acc],
+            show hd::tl ++ nil = hd::tl, by rw [e1, e2])
 
     theorem append_assoc (r s t : list α) :
-    r ++ s ++ t = r ++ (s ++ t) := sorry
+    r ++ s ++ t = r ++ (s ++ t) :=
+    list.rec_on
+        r
+        (show nil ++ s ++ t = nil ++ (s ++ t), by rw [nil_append, nil_append])
+        (λ (hd : α) (tl : list α) (acc : tl ++ s ++ t = tl ++ (s ++ t)),
+            calc
+                ((hd::tl) ++ s) ++ t = hd::((tl ++ s) ++ t) : cons_append hd (tl ++ s) t
+                                 ... = hd::(tl ++ (s ++ t)) : by rw [acc]
+                                 ... = (hd::tl) ++ (s ++ t) : by rw [cons_append hd (tl)] )
 
     -- > Try also defining the function length : Π {α : Type u}, list α → nat that returns the
     -- > length of a list, and prove that it behaves as expected (for example, length (s ++ t) =
     -- > length s + length t).
 
-    def length : list α → ℕ := sorry
+    def length : list α → ℕ := λ xs, list.rec 0 (λ item list acc, acc + 1) xs
 
-    theorem length_of_nil_is_zero : length (@nil α) = 0 := sorry
-    theorem append_length (l1 l2 : list α) : length (l1 ++ l2) = (length l1) + length (l2) := sorry
-    theorem cons_increases_len_by_1 (a : α) (l : list α) : length (cons a l) = length l + 1 := sorry
+    theorem length_of_nil_is_zero : length (@nil α) = 0 := by refl
+    theorem append_length (l1 l2 : list α) : length (l1 ++ l2) = length l1 + length l2 :=
+    list.rec_on
+        l1
+        (
+            have f1 : length (nil ++ l2) = length l2, by rw [nil_append],
+            have f2 : length (@nil α) + length l2 = length l2, by rw [length_of_nil_is_zero, zero_add],
+            show length (nil ++ l2) = length nil + length l2, by rw [f1, f2]
+        )
+        (λ (hd : α) (tl : list α) (acc : length (tl ++ l2) = length tl + length l2),
+            have length (hd::tl) = length tl + 1, by refl,
+            eq.symm $
+            calc
+                length (hd::tl) + length l2 = length tl + length l2 + 1 : by rw [this, add_assoc, add_comm 1, add_assoc]
+                                        ... = length (tl ++ l2) + 1 : by rw [acc]
+                                        ... = length (hd::tl ++ l2) : by refl
+        )
+
+
+    theorem cons_increases_len_by_1 (a : α) (l : list α) : length (list.cons a l) = length l + 1 := by refl
 
 end ch7_section5
