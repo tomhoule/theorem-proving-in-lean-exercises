@@ -136,3 +136,79 @@ section ch7_section7
     eq.rec_on h rfl
 
 end ch7_section7
+
+namespace ch7ex1
+
+    def mul (m n : ℕ) : ℕ :=
+    nat.rec_on
+        n
+        nat.zero
+        (λ n multiplied, multiplied + m)
+
+    def predecessor (n : ℕ) : ℕ :=
+    nat.rec_on
+        n
+        nat.zero
+        (λ n n_pred,
+            cond (nat.succ n = 1) nat.zero (nat.succ n_pred)
+        )
+
+    def trunc_sub (m n : ℕ) : ℕ :=
+    nat.rec_on
+        n
+        m
+        (λ _ running, predecessor running)
+
+    def pow (m n : ℕ) : ℕ :=
+    nat.rec_on
+        n
+        1
+        (λ exp running, mul running m)
+
+    theorem n_gt_n_is_absurd (n : ℕ) (n_gt_n : n > n) : false := gt_irrefl n $ n_gt_n
+
+    namespace hidden
+
+        theorem mul_zero (n : ℕ) : mul n 0 = 0 := rfl
+        theorem two_times_two : mul 2 2 = 4 := rfl
+
+        theorem mul_one (n : ℕ) : mul n 1 = n :=
+        begin
+            have : mul n 1 = 0 + n, by refl,
+            show mul n 1 = n, by rw [this, zero_add]
+        end
+
+        theorem mul_comm (m n : ℕ) : mul m n = mul n m := sorry
+
+        theorem mul_assoc (l m n : ℕ) : mul l (mul m n) = mul (mul l m) n := sorry
+
+        theorem predecessor_of_zero_is_zero : predecessor 0 = 0 := rfl
+        theorem predecessor_of_one_is_zero : predecessor 1 = 0 := rfl
+        theorem predecessor_of_two_is_one : predecessor 2 = 1 := rfl
+        theorem predecessor_of_thirty_seven_is_thirty_six : predecessor 37 = 36 := rfl
+
+        theorem zero_minus_zero_is_zero : trunc_sub 0 0 = 0 := rfl
+        theorem n_minus_zero_is_n (n : ℕ) : trunc_sub n 0 = n := rfl
+        theorem thirty_seven_minus_one_is_thirty_six : trunc_sub 37 1 = 36 := rfl
+        theorem thirty_seven_minus_twelve_is_twenty_five : trunc_sub 37 12 = 25 := rfl
+
+        theorem pow_2_2_is_4 : pow 2 2 = 4 := rfl
+        theorem pow_6_2_is_36 : pow 6 2 = 36 := rfl
+        theorem pow_0_1_is_0 : pow 0 1 = 0 := rfl
+        theorem pow_n_zero_is_1 (n : ℕ) : pow n 0 = 1 := rfl
+        theorem pow_5_3_is_125 : pow 5 3 = 125 := rfl
+
+        theorem pow_n_1_is_n (n : ℕ) : (pow n 1) = n :=
+        nat.rec_on n
+            (show pow nat.zero 1 = 0, from rfl)
+            (λ m m_pow_1_eq_m,
+                calc
+                    pow (nat.succ m) 1 = mul (pow (nat.succ m) 0) (nat.succ m) : rfl
+                                   ... = mul 1 (nat.succ m) : rfl
+                                   ... = mul (nat.succ m) 1 : by rw mul_comm
+                                   ... = nat.succ m : by rw mul_one
+            )
+
+    end hidden
+
+end ch7ex1
