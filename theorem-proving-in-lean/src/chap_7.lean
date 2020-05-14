@@ -143,7 +143,7 @@ namespace ch7ex1
     nat.rec_on
         n
         nat.zero
-        (λ n multiplied, multiplied + m)
+        (λ n product, product + m)
 
     def predecessor (n : ℕ) : ℕ :=
     nat.rec_on
@@ -169,18 +169,104 @@ namespace ch7ex1
 
     namespace hidden
 
+        theorem predecessor_succ_n_eq_n (n : ℕ) : predecessor (nat.succ n) = n :=
+        nat.rec_on n
+            (show predecessor (nat.succ nat.zero) = nat.zero, from rfl)
+            (λ n1 eqs, show predecessor (nat.succ (nat.succ n1)) = nat.succ n1, from eq.symm $
+                calc
+                    nat.succ n1 = nat.succ (predecessor (nat.succ n1)) : by rw eqs
+                            ... = predecessor (nat.succ (nat.succ n1)) : by refl
+            )
+
         theorem mul_zero (n : ℕ) : mul n 0 = 0 := rfl
+        theorem zero_mul (n : ℕ) : mul 0 n = 0 :=
+        nat.rec_on n
+            rfl
+            (λ n1 eqs,
+                calc
+                    mul 0 (nat.succ n1) = mul 0 n1 : rfl
+                                    ... = 0 : by rw eqs)
+
         theorem two_times_two : mul 2 2 = 4 := rfl
+        theorem two_times_three : mul 2 3 = 6 := rfl
+
+        theorem one_mul (n : ℕ) : mul 1 n = n :=
+        nat.rec_on
+            n
+            (show mul 1 0 = 0, from rfl)
+            (λ n eqs,
+                calc
+                    mul 1 (nat.succ n) = nat.succ (mul 1 n) : rfl
+                                   ... = nat.succ n : by rw eqs
+            )
 
         theorem mul_one (n : ℕ) : mul n 1 = n :=
-        begin
-            have : mul n 1 = 0 + n, by refl,
-            show mul n 1 = n, by rw [this, zero_add]
-        end
+        nat.rec_on n rfl
+            (
+                λ n eqs,
+                    calc
+                        mul (nat.succ n) 1 = nat.succ (mul n 1) : rfl
+                                       ... = nat.succ n : by rw eqs
+            )
 
-        theorem mul_comm (m n : ℕ) : mul m n = mul n m := sorry
+        theorem succ_add_eq_add_succ (m n : ℕ) : nat.succ m + n = m + nat.succ n :=
+        nat.rec_on n
+            (show nat.succ m + nat.zero = nat.succ m, by rw add_zero)
+            (
+                assume n (hi : nat.succ m + n = m + nat.succ n),
+                calc
+                    nat.succ m + nat.succ n = m + 1 + nat.succ n : rfl
+                        ... = m + (1 + nat.succ n) : by rw add_assoc
+                        ... = m + (nat.succ $ nat.succ n) : by rw [add_comm 1]
+                        ... = m + nat.succ (nat.succ n) : rfl
+            )
 
-        theorem mul_assoc (l m n : ℕ) : mul l (mul m n) = mul (mul l m) n := sorry
+        theorem mul_add_once (m n : ℕ) : mul m n + n = mul (nat.succ m) n :=
+        nat.rec_on n
+            (show mul m 0 + 0 = mul (nat.succ m) 0, from rfl)
+            (assume n (hi : mul m n + n = mul (nat.succ m) n),
+                -- eq.symm $
+                calc
+                    mul m (nat.succ n) + (nat.succ n) = mul m n + m + (nat.succ n) : rfl
+                        ... = mul m n + (m + nat.succ n) : by rw [add_assoc]
+                        ... = mul m n + (nat.succ m + n) : by rw succ_add_eq_add_succ
+                        ... = mul m n + n + nat.succ m : by rw [add_comm (nat.succ m) n, add_assoc]
+                        ... = mul (nat.succ m) n + nat.succ m : by rw hi
+                        ... = mul (nat.succ m) (nat.succ n) : by refl
+            )
+
+        theorem mul_comm (m n : ℕ) : mul m n = mul n m :=
+        nat.rec_on n
+            (show mul m 0 = mul 0 m, by rw [mul_zero, zero_mul])
+            (λ n eqs,
+                show mul m (nat.succ n) = mul (nat.succ n) m, from calc
+                    mul m (nat.succ n) = mul m n + m : rfl
+                        ... = (mul n m) + m : by rw eqs
+                        ... = mul (nat.succ n) m : by rw mul_add_once
+            )
+
+        theorem mul_distrib (l m n : ℕ) : mul l (m + n) = mul l m + mul l n :=
+            nat.rec_on n
+                (show mul l (m + 0) = mul l m + mul l 0, by repeat { rw add_zero <|> rw mul_zero })
+                (assume n (hi : mul l (m + n) = mul l m + mul l n),
+                    calc
+                        mul l (m + nat.succ n) = mul l (nat.succ (m + n)) : rfl
+                            ... = mul l (m + n) + l : rfl
+                            ... = (mul l m + mul l n) + l : by rw hi
+                            ... = mul l m + (mul l n + l) : by rw add_assoc
+                            ... = mul l m + mul l (nat.succ n) : rfl
+                )
+
+        theorem mul_assoc (l m n : ℕ) : mul l (mul m n) = mul (mul l m) n :=
+        nat.rec_on n
+            (show mul l (mul m 0) = mul (mul l m) 0, by { repeat { rw mul_zero <|> rw zero_mul } })
+            (assume n (hi : mul l (mul m n) = mul (mul l m) n),
+                calc
+                    mul l (mul m (nat.succ n)) = mul l ((mul m n) + m) : rfl
+                        ... = mul l (mul m n) + mul l m : by rw mul_distrib
+                        ... = mul (mul l m) n + mul l m : by rw hi
+                        ... = mul (mul l m) (nat.succ n) : rfl
+            )
 
         theorem predecessor_of_zero_is_zero : predecessor 0 = 0 := rfl
         theorem predecessor_of_one_is_zero : predecessor 1 = 0 := rfl
@@ -208,6 +294,46 @@ namespace ch7ex1
                                    ... = mul (nat.succ m) 1 : by rw mul_comm
                                    ... = nat.succ m : by rw mul_one
             )
+
+        theorem pow_addition_identity (b m n : ℕ) : pow b (m + n) = mul (pow b m) (pow b n) :=
+        nat.rec_on n
+            (show pow b (m + 0) = mul (pow b m) (pow b 0), by rw [add_zero, pow_n_zero_is_1, mul_one])
+            (assume n (hi : pow b (m + n) = mul (pow b m) (pow b n)),
+                calc
+                    pow b (m + nat.succ n) = pow b (nat.succ (m + n)) : rfl
+                        ... = mul (pow b (m + n)) b : rfl
+                        ... = mul (mul (pow b m) (pow b n)) b : by rw hi
+                        ... = mul (pow b m) (mul (pow b n) b) : by rw [mul_assoc]
+                        ... = mul (pow b m) (pow b (nat.succ n)) : rfl
+            )
+
+
+        example (b m n : ℕ) : pow (pow b m) n = pow b (mul m n) :=
+            nat.rec_on n
+                (show pow (pow b m) 0 = pow b (mul m 0), by repeat { rw mul_zero <|> rw pow_n_zero_is_1 })
+                (assume n (hi : pow (pow b m) n = pow b (mul m n)),
+                    calc
+                        pow (pow b m) (nat.succ n) = mul (pow (pow b m) n) (pow b m) : rfl
+                            ... = mul (pow b (mul m n)) (pow b m) : by rw hi
+                            ... = pow b (mul m n + m) : by rw pow_addition_identity
+                            ... = pow b (mul m (nat.succ n)) : rfl
+                )
+
+        example (b c n : ℕ) : pow (mul b c) n = mul (pow b n) (pow c n) :=
+            nat.rec_on n
+                (show pow (mul b c) 0 = mul (pow b 0) (pow c 0), by { rw [pow_n_zero_is_1, pow_n_zero_is_1, pow_n_zero_is_1], refl })
+                (assume n (hi : pow (mul b c) n = mul (pow b n) (pow c n)),
+                    calc
+                        pow (mul b c) (nat.succ n) = mul (pow (mul b c) n) (mul b c) : rfl
+                            ... = mul (mul (pow b n) (pow c n)) (mul b c) : by rw hi
+                            ... = mul (mul (mul (pow c n) (pow b n)) b) c : by rw [mul_assoc, mul_comm (pow b n)]
+                            ... = mul (mul (pow c n) (mul (pow b n) b)) c : by rw [mul_assoc]
+                            ... = mul (mul (pow c n) (pow b (nat.succ n))) c : rfl
+                            ... = mul (mul (pow b (nat.succ n)) (pow c n)) c : by rw [mul_comm (pow b (nat.succ n))]
+                            ... = mul (pow b (nat.succ n)) (mul (pow c n) c) : by rw mul_assoc
+                            ... = mul (pow b (nat.succ n)) (pow c (nat.succ n)) : rfl
+
+                )
 
     end hidden
 
