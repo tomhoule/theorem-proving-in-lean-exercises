@@ -338,3 +338,57 @@ namespace ch7ex1
     end hidden
 
 end ch7ex1
+
+namespace ch7ex2
+    open ch7_section5
+
+    variables { α : Type }
+
+    def reverse (xs : list α) : list α :=
+    list.rec_on xs
+        list.nil
+        (assume x (xs: list α) (hi : list α), list.append hi (list.cons x list.nil))
+
+    theorem nil_append (xs : list α) : list.nil ++ xs = xs := rfl
+    theorem reverse_nil : reverse (@list.nil α) = @list.nil α := rfl
+
+    theorem reverse_append (xs ys : list α) : reverse (xs ++ ys) = reverse ys ++ reverse xs :=
+    list.rec_on xs
+        (show reverse (list.nil ++ ys) = reverse ys ++ list.nil, by rw [nil_append, append_nil])
+        (assume hd (tl : list α) (hi : reverse (tl ++ ys) = reverse ys ++ reverse tl),
+            calc
+                reverse ((hd::tl) ++ ys) = reverse (hd::(tl ++ ys)) : rfl
+                    ... = reverse (tl ++ ys) ++ (hd::list.nil) : rfl
+                    ... = (reverse ys ++ reverse tl) ++ (hd::list.nil) : by rw hi
+                    ... = reverse ys ++ (reverse tl ++ (hd::list.nil)) : by rw append_assoc
+                    ... = reverse ys ++ reverse (hd::tl) : rfl
+        )
+
+    theorem basic_append (a b c d : α) :
+        reverse (list.cons a (list.cons b (list.cons c (list.cons d list.nil)))) = list.cons d (list.cons c (list.cons b (list.cons a list.nil))) :=
+            rfl
+
+    theorem reverse_preserves_length (xs : list α) : length (reverse xs) = length xs :=
+    list.rec_on xs
+        (show length (reverse list.nil) = length list.nil, by rw reverse_nil)
+        (assume hd (tl : list α) (hi : length (reverse tl) = length tl),
+            calc
+                length (reverse $ hd::tl) = length ((reverse tl) ++ (hd::list.nil)) : rfl
+                    ... = length (reverse tl) + length (hd::list.nil) : by rw append_length
+                    ... = length tl + 1 : by { rw hi, refl }
+                    ... = length (hd::tl) : rfl
+        )
+
+    theorem reverse_twice_is_id (xs : list α) : reverse (reverse xs) = xs :=
+    list.rec_on xs
+        (show reverse (reverse list.nil) = list.nil, from rfl)
+        (assume hd (xs : list α) (hi : reverse (reverse xs) = xs),
+            calc
+                reverse (reverse $ hd::xs) = reverse ((reverse xs) ++ (hd::list.nil)) : rfl
+                    ... = reverse (hd::list.nil) ++ (reverse $ reverse xs) : by rw reverse_append
+                    ... = hd::(reverse $ reverse xs) : rfl
+                    ... = hd::xs : by rw hi
+            -- show reverse (reverse $ hd::xs) = hd::xs, from sorry
+        )
+
+end ch7ex2
