@@ -392,3 +392,47 @@ namespace ch7ex2
         )
 
 end ch7ex2
+
+namespace ch7ex3
+
+    inductive Expr : Type
+    | const (n : ℕ) : Expr
+    | var (n : ℕ) : Expr
+    | plus (s t : Expr) : Expr
+    | times (s t : Expr) : Expr
+
+
+    def eval (vars : list ℕ) (expr : Expr) : option ℕ :=
+    Expr.rec_on expr
+        (λ hn, hn)
+        (λ idx, vars.nth idx)
+        (λ hs ht hseval hteval,
+            have product : option (ℕ × ℕ), from option.bind hseval (λ ha, option.map (λ hb, ⟨ha, hb⟩) hteval ),
+            option.map (λ (h : ℕ × ℕ), h.1 + h.2) product
+        )
+        (λ hs ht hseval hteval,
+            have product : option (ℕ × ℕ), from option.bind hseval (λ ha, option.map (λ hb, (ha, hb)) hteval),
+            option.map (λ (h : ℕ × ℕ), h.1 * h.2) product
+        )
+    -- begin
+    --     cases expr,
+    --         case Expr.const : n
+    --         { exact option.some n },
+    --         case Expr.var : n
+    --         { exact vars.nth n },
+    --         case Expr.plus : m n
+    --         {
+    --             have sum : option (ℕ × ℕ), from (m.eval vars).seq (λ hm, n.map (λ hn, (hm, hn))),
+    --             exact none
+    --         },
+    --         case Expr.times : m n
+    --         { exact none },
+    -- end
+
+    theorem const_2_is_2 : eval [] (Expr.const 2) = option.some 2 := rfl
+    theorem simple_var_assignment : eval [5] (Expr.var 0) = option.some 5 := rfl
+    theorem missing_vars_fail_evaluation : eval [5, 8] (Expr.var 4) = option.none := rfl
+    theorem addition_with_variable : eval [12] (Expr.plus (Expr.const 2) (Expr.var 0)) = some 14 := rfl
+    theorem addition_and_multiplication_with_variables : eval [4, 10] (Expr.times (Expr.var 1) (Expr.plus (Expr.const 5) (Expr.var 0))) = some 90 := rfl
+
+end ch7ex3
