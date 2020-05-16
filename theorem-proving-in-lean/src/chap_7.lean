@@ -414,20 +414,6 @@ namespace ch7ex3
             have product : option (ℕ × ℕ), from option.bind hseval (λ ha, option.map (λ hb, (ha, hb)) hteval),
             option.map (λ (h : ℕ × ℕ), h.1 * h.2) product
         )
-    -- begin
-    --     cases expr,
-    --         case Expr.const : n
-    --         { exact option.some n },
-    --         case Expr.var : n
-    --         { exact vars.nth n },
-    --         case Expr.plus : m n
-    --         {
-    --             have sum : option (ℕ × ℕ), from (m.eval vars).seq (λ hm, n.map (λ hn, (hm, hn))),
-    --             exact none
-    --         },
-    --         case Expr.times : m n
-    --         { exact none },
-    -- end
 
     theorem const_2_is_2 : eval [] (Expr.const 2) = option.some 2 := rfl
     theorem simple_var_assignment : eval [5] (Expr.var 0) = option.some 5 := rfl
@@ -436,3 +422,67 @@ namespace ch7ex3
     theorem addition_and_multiplication_with_variables : eval [4, 10] (Expr.times (Expr.var 1) (Expr.plus (Expr.const 5) (Expr.var 0))) = some 90 := rfl
 
 end ch7ex3
+
+namespace ch7ex4
+
+    inductive Proposition : Type
+    | false : Proposition
+    | var (n : ℕ) : Proposition
+    | not (p : Proposition) : Proposition
+    | and (p q : Proposition) : Proposition
+    | or (p q : Proposition) : Proposition
+
+    def eval (vars : list bool) (formula : Proposition) : option bool :=
+    begin
+        induction formula,
+            case Proposition.false
+                { exact bool.ff },
+            case Proposition.var : n
+                { exact vars.nth n },
+            case Proposition.not
+                { exact option.map (λ h, bool.rec_on h bool.tt bool.ff) formula_ih },
+            case Proposition.and
+                {
+                    have : option (bool × bool), from option.bind  formula_ih_p (λ hp, option.map (λ hq, (hp, hq)) formula_ih_q),
+                    exact option.map (λ (hpq : bool × bool), bool.rec_on hpq.1 bool.ff hpq.2) this
+                 },
+            case Proposition.or
+                {
+                    have : option (bool × bool), from option.bind  formula_ih_p (λ hp, option.map (λ hq, (hp, hq)) formula_ih_q),
+                    exact option.map (λ (hpq : bool × bool), bool.rec_on hpq.1 hpq.2 bool.tt) this
+                 },
+    end
+
+    def complexity (formula : Proposition) : ℕ :=
+    begin
+        induction formula,
+            case Proposition.false
+                { exact 1 },
+            case Proposition.var
+                { exact 1 },
+            case Proposition.not
+                { exact 1 + formula_ih },
+            case Proposition.and : p q
+                { exact formula_ih_p + formula_ih_q + 1 },
+            case Proposition.or : p q
+                { exact formula_ih_p + formula_ih_q + 1 },
+    end
+
+    def substitute (varnum : ℕ) (formula subst : Proposition) : Proposition :=
+    begin
+        induction formula,
+            case Proposition.false
+                { exact Proposition.false },
+            case Proposition.var : n
+                { exact cond (varnum = n) subst (Proposition.var n) },
+            case Proposition.not : p
+                { exact Proposition.not formula_ih },
+            case Proposition.and : p q
+                { exact Proposition.and formula_ih_p formula_ih_q },
+            case Proposition.or : p q
+                { exact Proposition.or formula_ih_p formula_ih_q },
+    end
+
+    lemma substitute_works : substitute 1 (Proposition.or (Proposition.false) (Proposition.var 1)) (Proposition.not Proposition.false) = Proposition.or Proposition.false (Proposition.not Proposition.false) := rfl
+
+end ch7ex4
