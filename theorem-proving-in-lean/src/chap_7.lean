@@ -486,3 +486,17 @@ namespace ch7ex4
     lemma substitute_works : substitute 1 (Proposition.or (Proposition.false) (Proposition.var 1)) (Proposition.not Proposition.false) = Proposition.or Proposition.false (Proposition.not Proposition.false) := rfl
 
 end ch7ex4
+
+namespace ch7ex5
+
+    inductive even : ℕ → bool → Prop
+    | zero : even 0 tt
+    | even_succ : ∀ (n : ℕ), even n ff → even (n + 1) tt
+    | odd_succ : ∀ (n : ℕ), even n tt → even (n + 1) ff
+
+    lemma zero_is_even : even 0 tt := even.zero
+    lemma one_is_odd : even 1 ff := even.odd_succ 0 even.zero
+    lemma two_is_even : even 2 tt := even.even_succ 1 one_is_odd
+    lemma three_is_odd : even 3 ff := even.odd_succ 2 two_is_even
+
+end ch7ex5
