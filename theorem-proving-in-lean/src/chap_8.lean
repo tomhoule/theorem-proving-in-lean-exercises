@@ -99,6 +99,9 @@ namespace chap8ex2
                     ... = addition l (succ (addition m npred)) : by refl
                     ... = addition l (addition m (succ npred)) : by refl
 
+
+        -- MULTIPLICATION --
+
         def multiplication : ℕ → ℕ → ℕ
         | 0 n := 0
         | m 0 := 0
@@ -129,6 +132,29 @@ namespace chap8ex2
                 multiplication 1 (succ n) = multiplication 1 n + 1 : rfl
                     ... = n + 1 : by rw [one_mul n]
                     ... = succ n : rfl
+
+        theorem mul_add_once : ∀ m n, addition (multiplication m n) n = multiplication (succ m) n
+        | 0 0 := rfl
+        | 0 (succ n) := by rw [one_mul, zero_mul, zero_add]
+        | (succ m) 0 := by rw [mul_zero, mul_zero, add_zero]
+        | (succ m) (succ n) :=
+            calc
+                addition (multiplication (succ m) (succ n)) (succ n) = addition (addition (multiplication (succ m) n) (succ m)) (succ n) : rfl
+                    ... = addition (multiplication (succ m) n) (addition (succ m) (succ n)) : by rw [addition_assoc]
+                    ... = addition (multiplication (succ m) n) (addition (succ n) (succ m)) : by rw [addition_comm (succ m)]
+                    ... = addition (addition (multiplication (succ m) n) n) (succ (succ m)) : by rw [add_succ_commutes, addition_assoc]
+                    ... = addition (multiplication (succ (succ m)) n) (succ (succ m)) : by rw [mul_add_once]
+                    ... = multiplication (succ (succ m)) (succ n) : rfl
+
+        theorem mul_comm : ∀ m n, multiplication m n = multiplication n m
+        | 0 0 := rfl
+        | 0 (succ n) := by rw [zero_mul, mul_zero]
+        | (succ m) 0 := by rw [zero_mul, mul_zero]
+        | (succ m) (succ n) :=
+            calc
+                multiplication (succ m) (succ n) = addition (multiplication (succ m) n) (succ m) : rfl
+                    ... = addition (multiplication n (succ m)) (succ m) : by rw [mul_comm]
+                    ... = multiplication (succ n) (succ m) : by rw [mul_add_once]
 
     end hidden
 
