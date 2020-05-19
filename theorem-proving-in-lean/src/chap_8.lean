@@ -183,6 +183,35 @@ namespace chap8ex2
                     ... = addition (addition (multiplication l' m) l') (multiplication l' n') : by rw [addition_comm l']
                     ... = addition (multiplication l' m') (multiplication l' n') : rfl
 
+        theorem mul_assoc : ∀ l m n, multiplication (multiplication l m) n = multiplication l (multiplication m n)
+        | 0 _ _ := by rw [zero_mul, zero_mul, zero_mul]
+        | _ 0 _ := by rw [mul_zero, zero_mul, mul_zero]
+        | _ _ 0 := by rw [mul_zero, mul_zero, mul_zero]
+        | (l+1) (m+1) (n+1) :=
+            let l' := succ l, m' := succ m, n' := succ n in
+            -- ditto
+            calc
+                multiplication (multiplication l' m') n' = addition (multiplication (multiplication l' m') n) (multiplication l' m') : rfl
+                    ... = addition (multiplication (addition (multiplication l' m) l') n) (multiplication l' m') : rfl
+                    ... = addition (multiplication (addition (addition (multiplication l m) m) l') n) (multiplication l' m') : by rw [mul_add_once]
+                    ... = addition (multiplication n (addition (addition (multiplication l m) m) l')) (multiplication l' m') : by rw [mul_comm]
+                    ... = addition (addition (multiplication n (addition (multiplication l m) m)) (multiplication n l')) (multiplication l' m') : by rw [mul_distrib n]
+                    ... = addition (addition (addition (multiplication n (multiplication l m)) (multiplication n m)) (multiplication n l')) (multiplication l' m') : by rw [mul_distrib n]
+                    ... = addition (addition (addition (multiplication (multiplication l m) n) (multiplication n m)) (multiplication n l')) (multiplication l' m') : by rw [mul_comm]
+                    ... = addition (addition (addition (multiplication l (multiplication m n)) (multiplication n m)) (multiplication n l')) (multiplication l' m') : by rw [mul_assoc]
+                    ... = addition (addition (addition (multiplication l (multiplication m n)) (multiplication m n)) (multiplication n l')) (multiplication l' m') : by rw [mul_comm m]
+                    ... = addition (addition (multiplication l' (multiplication m n)) (multiplication n l')) (multiplication l' m') : by rw [mul_add_once]
+                    ... = addition (multiplication l' (multiplication m n)) (addition (multiplication n l') (multiplication l' m')) : by rw [addition_assoc]
+                    ... = addition (multiplication l' (multiplication m n)) (addition (multiplication l' n) (multiplication l' m')) : by rw [mul_comm n]
+                    ... = addition (multiplication l' (multiplication m n)) (multiplication l' (addition n m')) : by rw [mul_distrib]
+                    ... = multiplication l' (addition (multiplication m n) (addition n m')) : by rw [←mul_distrib]
+                    ... = multiplication l' (addition (multiplication n m) (addition n m')) : by rw [mul_comm m]
+                    ... = multiplication l' (addition (addition (multiplication n m) n) m') : by rw [addition_assoc]
+                    ... = multiplication l' (addition (addition (multiplication n m) m) n') : by rw [addition_assoc, addition_comm n, add_succ_commutes, ←addition_assoc]
+                    ... = multiplication l' (addition (multiplication n' m) n') : by rw [mul_add_once]
+                    ... = multiplication l' (multiplication n' m') : by refl
+                    ... = multiplication l' (multiplication m' n') : by rw [mul_comm n']
+
     end hidden
 
 end chap8ex2
