@@ -212,6 +212,32 @@ namespace chap8ex2
                     ... = multiplication l' (multiplication n' m') : by refl
                     ... = multiplication l' (multiplication m' n') : by rw [mul_comm n']
 
+
+        -- POW --
+
+        def pow (m : ℕ) : ℕ → ℕ
+        | 0 := 1
+        | (n+1) := multiplication (pow n) m
+
+        theorem pow_2_2_is_4 : pow 2 2 = 4 := rfl
+        theorem pow_6_2_is_36 : pow 6 2 = 36 := rfl
+        theorem pow_0_1_is_0 : pow 0 1 = 0 := rfl
+        theorem pow_n_zero_is_1 (n : ℕ) : pow n 0 = 1 := rfl
+        theorem pow_5_3_is_125 : pow 5 3 = 125 := rfl
+
+        theorem pow_n_1_is_n : ∀ m, (pow m 1) = m
+        | 0 := rfl
+        | (m+1) :=
+            calc
+                pow (m+1) 1 = multiplication (pow m 0) (m+1) : rfl
+                    ... = multiplication 1 (m + 1) : rfl
+                    ... = m+1 : by rw [one_mul]
+
+        theorem pow_addition_identity (b m n : ℕ) : pow b (m + n) = multiplication (pow b m) (pow b n) := sorry
+        example (b m n : ℕ) : pow (pow b m) n = pow b (multiplication m n) := sorry
+        example (b c n : ℕ) : pow (multiplication b c) n = multiplication (pow b n) (pow c n) := sorry
+
+
     end hidden
 
 end chap8ex2
