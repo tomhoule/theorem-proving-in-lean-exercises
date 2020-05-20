@@ -240,6 +240,14 @@ namespace chap8ex2
                     ... = multiplication 1 (m + 1) : rfl
                     ... = m+1 : by rw [one_mul]
 
+        theorem pow_1_n_is_one : ∀ n, pow 1 n = 1
+        | 0 := rfl
+        | (n+1) :=
+            calc
+                pow 1 (n+1) = multiplication (pow 1 n) 1 : rfl
+                    ... = multiplication 1 1 : by rw [pow_1_n_is_one]
+                    ... = 1 : by rw mul_one
+
         theorem pow_addition_identity : ∀ (b m n : ℕ), pow b (addition m n) = multiplication (pow b m) (pow b n)
         | b 0 0 := by rw [add_zero, pow_n_zero_is_1, mul_one]
         | b (m+1) 0 :=
@@ -262,9 +270,28 @@ namespace chap8ex2
                     ... = multiplication (pow b (m+1)) (multiplication (pow b n) b) : by rw [mul_assoc]
                     ... = multiplication (pow b (m+1)) (pow b (n+1)) : by refl
 
-        example (b m n : ℕ) : pow (pow b m) n = pow b (multiplication m n) := sorry
-        example (b c n : ℕ) : pow (multiplication b c) n = multiplication (pow b n) (pow c n) := sorry
+        theorem pow_multiplication_identity : ∀ (b c n : ℕ), pow (multiplication b c) n = multiplication (pow b n) (pow c n)
+        | _ _ 0 := by rw [pow_n_zero_is_1, pow_n_zero_is_1, pow_n_zero_is_1, mul_one]
+        | b c (n+1) :=
+            calc
+                pow (multiplication b c) (n+1) = multiplication (pow (multiplication b c) n) (multiplication b c) : rfl
+                    ... = multiplication (multiplication (pow b n) (pow c n)) (multiplication b c) : by rw [pow_multiplication_identity]
+                    ... = multiplication (pow b n) (multiplication (pow c n) (multiplication b c)) : by rw [mul_assoc]
+                    ... = multiplication (pow b n) (multiplication (multiplication (pow c n) c) b) : by rw [mul_comm b, mul_assoc]
+                    ... = multiplication (pow b n) (multiplication (pow c (n+1)) b) : by refl
+                    ... = multiplication (multiplication (pow b n) b) (pow c (n+1)) : by rw [mul_comm (pow c (n+1)), mul_assoc]
+                    ... = multiplication (pow b (n+1)) (pow c (n+1)) : rfl
 
+        theorem pow_pow_identity : ∀ (b m n : ℕ), pow (pow b m) n = pow b (multiplication m n)
+        | _ _ 0 := by rw [pow_n_zero_is_1, mul_zero, pow_n_zero_is_1]
+        | _ 0 (n+1) := by rw [pow_n_zero_is_1, zero_mul, pow_n_zero_is_1, pow_1_n_is_one]
+        | b (m+1) (n+1) :=
+            let m' := m+1, n' := n+1 in
+            calc
+                pow (pow b m') (n+1) = multiplication (pow (pow b m') n) (pow b m') : rfl
+                    ... = multiplication (pow b (multiplication m' n)) (pow b m') : by rw [pow_pow_identity]
+                    ... = pow b (addition (multiplication m' n) m') : by rw [←pow_addition_identity]
+                    ... = pow b (multiplication m' (succ n)) : rfl
 
     end hidden
 
