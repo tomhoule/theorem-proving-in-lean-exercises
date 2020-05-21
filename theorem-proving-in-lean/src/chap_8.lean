@@ -296,3 +296,63 @@ namespace chap8ex2
     end hidden
 
 end chap8ex2
+
+namespace chap8ex3
+
+    namespace hidden
+
+        variable {α : Type}
+        variables (a b c d : α)
+
+        def append : list α → list α → list α
+        | [] snd := snd
+        | (hd::tl) snd := hd::(append tl snd)
+
+        def reverse : list α → list α
+        | [] := []
+        | (hd::tl) := append (reverse tl) [hd]
+
+        lemma reverse_abcd : reverse [a, b, c, d] = [d, c, b, a] := rfl
+
+        def length : list α → ℕ
+        | [] := 0
+        | (hd::tl) := nat.succ $ length tl
+
+        lemma length_abcd : length [a, b, c, d] = 4 := rfl
+
+        def append_nil : ∀ (l: list α), append l [] = l
+        | [] := rfl
+        | (hd::tl) := calc append (hd::tl) [] = hd::(append tl []) : rfl
+            ... = (hd::tl) : by rw [append_nil]
+
+        def nil_append : ∀ (l : list α), append [] l = l
+        | [] := rfl
+        | (hd::tl) := rfl
+
+        theorem append_lengths : ∀ (l m : list α), length (append l m) = length l + length m
+        | l [] := calc
+            length (append l []) = length l : by rw [append_nil]
+                ... = length l + length [] : rfl
+        | [] m := calc
+            length (append [] m) = length m : by rw [nil_append]
+                ... = 0 + length m : by rw [zero_add]
+                ... = length [] + length m : rfl
+        | (hd::tl) m :=
+            calc length (append (hd::tl) m) = length (hd::(append tl m)) : rfl
+                ... = length (append tl m) + 1 : rfl
+                ... = (length tl + length m) + 1 : by rw [append_lengths]
+                ... = (length tl + 1) + length m : by rw [add_assoc, add_comm (length m), add_assoc]
+                ... = length (hd::tl) + length m : rfl
+
+
+        theorem reverse_preserves_length : ∀ (l : list α), length l = length (reverse l)
+        | [] := rfl
+        | (hd::tl) := eq.symm $ calc
+            length (reverse (hd::tl)) = length (append (reverse tl) [hd]) : rfl
+                ... = length (reverse tl) + length [hd] : by rw [append_lengths]
+                ... = length tl + 1 : by { rw [reverse_preserves_length tl], refl }
+                ... = length (hd::tl) : rfl
+
+    end hidden
+
+end chap8ex3
