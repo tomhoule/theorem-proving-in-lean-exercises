@@ -359,52 +359,92 @@ end chap8ex3
 
 namespace chap8ex4
 
-    variable (C : ℕ → Type)
+    namespace hidden
 
-    #check @nat.rec C
 
-    #check (@nat.below C : ℕ → Type)
-    #check nat.below
+        variable (C : ℕ → Type)
 
-    #reduce @nat.below C (3 : nat)
+        #check @nat.rec C
 
-    #check (@nat.brec_on C :
-      Π (n : ℕ), (Π (n' : ℕ), nat.below C n' → C n') → C n)
+        #check (@nat.below C : ℕ → Type)
+        #check nat.below
 
-    def course_of_value_helper : Π (n : ℕ), (Π (n' : ℕ), nat.below C n' → C n') → nat.below C n
-    | 0 _ := ()
-    | (n+1) f := ⟨⟨f n (course_of_value_helper n f), course_of_value_helper n f⟩, ()⟩
+        #reduce @nat.below C (3 : nat)
 
-    def course_of_value : Π (n : ℕ), (Π (n' : ℕ), nat.below C n' → C n') → C n
-    | 0 := (
-        λ h,
-        have f : nat.below C 0 → C 0, from h 0,
-        have nat.below C 0, from (),
-        f this
-    )
-    | (n+1) := (
-        λ h,
-        have f : nat.below C (n+1) → C (n+1), from h (n+1),
-        have nat.below C (n+1), from ⟨⟨course_of_value n h, course_of_value_helper C n h⟩, ()⟩,
-        f this
-    )
+        #check (@nat.brec_on C :
+        Π (n : ℕ), (Π (n' : ℕ), nat.below C n' → C n') → C n)
 
-    def fib_impl : Π (n : ℕ), nat.below (λ (n : ℕ), ℕ) n → ℕ
-    | 0 _ := 1
-    | 1 _ := 1
-    | (n+2) ⟨⟨fibn, ⟨⟨fibnplus1, _⟩, ()⟩⟩, ()⟩ := by { exact fibn + fibnplus1 }
+        def course_of_value_helper : Π (n : ℕ), (Π (n' : ℕ), nat.below C n' → C n') → nat.below C n
+        | 0 _ := ()
+        | (n+1) f := ⟨⟨f n (course_of_value_helper n f), course_of_value_helper n f⟩, ()⟩
 
-    def fib : nat → nat := λ n,
-    @course_of_value (λ (n : ℕ), ℕ) n (
-        λ n' h,
-        @fib_impl n' h
-    )
+        def course_of_value : Π (n : ℕ), (Π (n' : ℕ), nat.below C n' → C n') → C n
+        | 0 := (
+            λ h,
+            have f : nat.below C 0 → C 0, from h 0,
+            have nat.below C 0, from (),
+            f this
+        )
+        | (n+1) := (
+            λ h,
+            have f : nat.below C (n+1) → C (n+1), from h (n+1),
+            have nat.below C (n+1), from ⟨⟨course_of_value n h, course_of_value_helper C n h⟩, ()⟩,
+            f this
+        )
 
-    example : fib 0 = 1 := rfl
-    example : fib 1 = 1 := rfl
-    example : fib 2 = 2 := rfl
-    example : fib 3 = 3 := rfl
-    example : fib 4 = 5 := rfl
-    example : fib 6 = 13 := rfl
+        def fib_impl : Π (n : ℕ), nat.below (λ (n : ℕ), ℕ) n → ℕ
+        | 0 _ := 1
+        | 1 _ := 1
+        | (n+2) ⟨⟨fibn, ⟨⟨fibnplus1, _⟩, ()⟩⟩, ()⟩ := by { exact fibn + fibnplus1 }
+
+        def fib : nat → nat := λ n,
+        @course_of_value (λ (n : ℕ), ℕ) n (
+            λ n' h,
+            @fib_impl n' h
+        )
+
+        example : fib 0 = 1 := rfl
+        example : fib 1 = 1 := rfl
+        example : fib 2 = 2 := rfl
+        example : fib 3 = 3 := rfl
+        example : fib 4 = 5 := rfl
+        example : fib 6 = 13 := rfl
+    end hidden
+
+    --- Well-founded recursion ---
+
+    namespace hidden
+        universes u v
+        variable α : Sort u
+        variable r : α → α → Prop
+        variable h : well_founded r
+
+        variable C : α → Sort (u + 1)
+        variable F : Π x, (Π (y : α), r y x → C y) → C x
+
+
+        #check @well_founded
+        #check @acc
+
+        #check (@well_founded.fix : Π {α : Sort u} {C : α → Sort (u + 1)} {r : α → α → Prop},
+        well_founded r → (Π (x : α), (Π (y : α), r y x → C y) → C x) → Π (x : α), C x)
+
+        def well_founded_fix (α : Sort u) (C : α → Sort (u + 1)):
+        Π {r : α → α → Prop}, well_founded r
+        → (Π (x : α), (Π (y : α), r y x → C y) → C x)
+        → Π (x : α), C x
+        | hr hwellfoundedr hc hx := (
+            have hryxtocy : Π (y : α), hr y hx → C y, from (
+                λ hy hryx,
+                have hr hy hx, from hryx,
+                have acc hr hy, from well_founded.apply hwellfoundedr hy,
+                acc.rec_on this (λ hz _ f, hc hz f)
+            ),
+            hc hx hryxtocy
+        )
+
+        def f : Π (x : α), C x := well_founded.fix h F
+        def f' : Π (x : α), C x := well_founded_fix α C h F
+    end hidden
 
 end chap8ex4
