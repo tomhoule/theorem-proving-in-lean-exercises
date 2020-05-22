@@ -356,3 +356,55 @@ namespace chap8ex3
     end hidden
 
 end chap8ex3
+
+namespace chap8ex4
+
+    variable (C : ℕ → Type)
+
+    #check @nat.rec C
+
+    #check (@nat.below C : ℕ → Type)
+    #check nat.below
+
+    #reduce @nat.below C (3 : nat)
+
+    #check (@nat.brec_on C :
+      Π (n : ℕ), (Π (n' : ℕ), nat.below C n' → C n') → C n)
+
+    def course_of_value_helper : Π (n : ℕ), (Π (n' : ℕ), nat.below C n' → C n') → nat.below C n
+    | 0 _ := ()
+    | (n+1) f := ⟨⟨f n (course_of_value_helper n f), course_of_value_helper n f⟩, ()⟩
+
+    def course_of_value : Π (n : ℕ), (Π (n' : ℕ), nat.below C n' → C n') → C n
+    | 0 := (
+        λ h,
+        have f : nat.below C 0 → C 0, from h 0,
+        have nat.below C 0, from (),
+        f this
+    )
+    | (n+1) := (
+        λ h,
+        have f : nat.below C (n+1) → C (n+1), from h (n+1),
+        have nat.below C (n+1), from ⟨⟨course_of_value n h, course_of_value_helper C n h⟩, ()⟩,
+        f this
+    )
+
+    def fib_impl : Π (n : ℕ), nat.below (λ (n : ℕ), ℕ) n → ℕ
+    | 0 _ := 1
+    | 1 _ := 1
+    | (n+2) ⟨⟨fibn, ⟨⟨fibnplus1, _⟩, ()⟩⟩, ()⟩ := by { exact fibn + fibnplus1 }
+
+    def fib : nat → nat := λ n,
+    @course_of_value (λ (n : ℕ), ℕ) n (
+        λ n' h,
+        @fib_impl n' h
+    )
+
+    example : fib 0 = 1 := rfl
+    example : fib 1 = 1 := rfl
+    example : fib 2 = 2 := rfl
+    example : fib 3 = 3 := rfl
+    example : fib 4 = 5 := rfl
+    example : fib 6 = 13 := rfl
+
+end chap8ex4
