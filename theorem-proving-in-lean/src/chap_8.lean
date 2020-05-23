@@ -448,3 +448,81 @@ namespace chap8ex4
     end hidden
 
 end chap8ex4
+
+namespace chap8ex5
+
+    universe u
+    variable {α : Type u}
+
+    inductive vector (α : Type u) : nat → Type u
+    | nil {} : vector 0
+    | cons   : Π {n}, α → vector n → vector (n+1)
+
+    #print nat.no_confusion
+    #print vector.no_confusion
+    #check @eq.rec
+
+    namespace vector
+        local notation h :: t := cons h t
+    end vector
+
+    -- With the equation compiler
+
+    def vec_zero_plus_n : Π (n : ℕ), vector α n → vector α (0 + n) :=
+    λ n v,
+    have h1 : vector α (n + 0) := v,
+    have h2 : vector α (n + 0) = vector α (0 + n), by rw [add_comm],
+    eq.rec h1 h2
+
+    def append_with_equation_compiler : Π (m n : ℕ), vector α m → vector α n → vector α (m + n)
+    | 0 n vector.nil v2 := vec_zero_plus_n n v2
+    | (m+1) n (vector.cons hd tl) v2 := (
+        have premise : vector α (m + n), from append_with_equation_compiler m n tl v2,
+        have shuffle : vector α (m + n + 1) = vector α (m+1+n), by rw [add_assoc, add_comm n, add_assoc],
+        eq.rec (vector.cons hd premise) shuffle
+    )
+
+    example : append_with_equation_compiler 2 1 (vector.cons 3 (vector.cons 5 vector.nil)) (vector.cons 8 vector.nil) = vector.cons 3 (vector.cons 5 (vector.cons 8 vector.nil)) := rfl
+
+    -- Without the equation compiler
+
+    def uncons : Π (n : ℕ), vector α (n + 1) → (α × vector α n)
+    | _ (vector.cons hd tl) := prod.mk hd tl
+
+    def uncons' : Π (n : ℕ), vector α (n + 1) → (α × vector α n) :=
+    λ n v,
+    @vector.cases_on
+        _
+        (λ {n} v, (α × vector α (n-1)))
+        _
+        v
+        sorry -- this sorry is never evaluated, because we know the vec is not empty
+              -- we should still expand the definition with a proof that n = m+1
+              -- and return a vec α m, then we can use nat.no_confusion here.
+        (λ {n: ℕ} hd tl, prod.mk hd tl)
+
+
+    def append_with_elbow_grease : Π (m n : ℕ), vector α m → vector α n → vector α (m + n) :=
+    λ m n v1 v2,
+    (
+        nat.rec_on m
+        (show vector α 0 → vector α (0 + n), from λ _, vec_zero_plus_n n v2)
+        (λ (m' : ℕ) (acc : vector α m' → vector α (m' + n)),
+            show vector α (m' + 1) → vector α (m' + 1 + n), from (
+                λ v,
+                let ⟨hd, tl⟩ := uncons' m' v in
+                have newtl : vector α (m' + n), from acc tl,
+                have newvec : vector α (m' + n + 1), from vector.cons hd newtl,
+                have shuffle : vector α (m' + n + 1) = vector α ((m' + 1) + n), by rw [add_assoc, add_comm n, add_assoc],
+                show vector α (m' + 1 + n), from eq.rec newvec shuffle
+            )
+        )
+    ) v1
+
+    #reduce append_with_elbow_grease 2 1 (vector.cons 3 (vector.cons 5 vector.nil)) (vector.cons 8 vector.nil) = vector.cons 3 (vector.cons 5 (vector.cons 8 vector.nil))
+    example : append_with_elbow_grease 2 1 (vector.cons 3 (vector.cons 5 vector.nil)) (vector.cons 8 vector.nil) = vector.cons 3 (vector.cons 5 (vector.cons 8 vector.nil)) := rfl
+
+end chap8ex5
+
+namespace ch8ex6
+end ch8ex6
