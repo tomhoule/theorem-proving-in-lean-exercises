@@ -489,17 +489,22 @@ namespace chap8ex5
     def uncons : Π (n : ℕ), vector α (n + 1) → (α × vector α n)
     | _ (vector.cons hd tl) := prod.mk hd tl
 
-    def uncons' : Π (n : ℕ), vector α (n + 1) → (α × vector α n) :=
-    λ n v,
+    def uncons' : Π (m n : ℕ), vector α m → (m = n + 1) → (α × vector α n) :=
+    λ m n v,
     @vector.cases_on
         _
-        (λ {n} v, (α × vector α (n-1)))
+        (λ {m} v, (m = n + 1) → (α × vector α n))
         _
         v
-        sorry -- this sorry is never evaluated, because we know the vec is not empty
-              -- we should still expand the definition with a proof that n = m+1
-              -- and return a vec α m, then we can use nat.no_confusion here.
-        (λ {n: ℕ} hd tl, prod.mk hd tl)
+        (λ (h : 0 = n + 1), nat.no_confusion h)
+        (λ {n': ℕ} (hd : α) (tl : vector α n'),
+            assume (h : n' + 1 = n + 1),
+            nat.no_confusion h (
+                λ (h1 : n' = n),
+                have vector α n' = vector α n, by rw [h1],
+                prod.mk hd (eq.rec tl this)
+            )
+        )
 
 
     def append_with_elbow_grease : Π (m n : ℕ), vector α m → vector α n → vector α (m + n) :=
@@ -510,7 +515,7 @@ namespace chap8ex5
         (λ (m' : ℕ) (acc : vector α m' → vector α (m' + n)),
             show vector α (m' + 1) → vector α (m' + 1 + n), from (
                 λ v,
-                let ⟨hd, tl⟩ := uncons' m' v in
+                let ⟨hd, tl⟩ := uncons' _ m' v rfl in
                 have newtl : vector α (m' + n), from acc tl,
                 have newvec : vector α (m' + n + 1), from vector.cons hd newtl,
                 have shuffle : vector α (m' + n + 1) = vector α ((m' + 1) + n), by rw [add_assoc, add_comm n, add_assoc],
