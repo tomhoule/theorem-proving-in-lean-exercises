@@ -466,13 +466,13 @@ namespace chap8ex5
         local notation h :: t := cons h t
     end vector
 
-    -- With the equation compiler
-
     def vec_zero_plus_n : Π (n : ℕ), vector α n → vector α (0 + n) :=
     λ n v,
     have h1 : vector α (n + 0) := v,
     have h2 : vector α (n + 0) = vector α (0 + n), by rw [add_comm],
     eq.rec h1 h2
+
+    -- With the equation compiler
 
     def append_with_equation_compiler : Π (m n : ℕ), vector α m → vector α n → vector α (m + n)
     | 0 n vector.nil v2 := vec_zero_plus_n n v2
@@ -524,10 +524,202 @@ namespace chap8ex5
         )
     ) v1
 
-    #reduce append_with_elbow_grease 2 1 (vector.cons 3 (vector.cons 5 vector.nil)) (vector.cons 8 vector.nil) = vector.cons 3 (vector.cons 5 (vector.cons 8 vector.nil))
     example : append_with_elbow_grease 2 1 (vector.cons 3 (vector.cons 5 vector.nil)) (vector.cons 8 vector.nil) = vector.cons 3 (vector.cons 5 (vector.cons 8 vector.nil)) := rfl
 
 end chap8ex5
 
-namespace ch8ex6
-end ch8ex6
+namespace chap8ex6
+
+    inductive aexpr : Type
+    | const : ℕ → aexpr
+    | var : ℕ → aexpr
+    | plus : aexpr → aexpr → aexpr
+    | times : aexpr → aexpr → aexpr
+
+    open aexpr
+
+    def sample_aexpr : aexpr :=
+    plus (times (var 0) (const 7)) (times (const 2) (var 1))
+
+    def aeval (v : ℕ → ℕ) : aexpr → ℕ
+    | (const n)    := n
+    | (var n)      := v n
+    | (plus e₁ e₂)  := aeval e₁ + aeval e₂
+    | (times e₁ e₂) := aeval e₁ * aeval e₂
+
+    def sample_val : ℕ → ℕ
+    | 0 := 5
+    | 1 := 6
+    | _ := 0
+
+    -- Try it out. You should get 47 here.
+    #eval aeval sample_val sample_aexpr
+
+    def simp_const : aexpr → aexpr
+    | (plus (const n₁) (const n₂))  := const (n₁ + n₂)
+    | (times (const n₁) (const n₂)) := const (n₁ * n₂)
+    | e                             := e
+
+    theorem simp_const_eq' (v : ℕ → ℕ) :
+    ∀ e : aexpr, aeval v (simp_const e) = aeval v e :=
+    begin
+        intros e,
+        cases e,
+        reflexivity,
+        reflexivity,
+        cases e_a,
+            cases e_a_1,
+            repeat { reflexivity },
+        cases e_a,
+            cases e_a_1,
+            repeat { reflexivity },
+    end
+
+    theorem simp_const_eq (v : ℕ → ℕ) :
+    ∀ e : aexpr, aeval v (simp_const e) = aeval v e
+    | (const _) := rfl
+    | (var _) := rfl
+    | (plus e1 e2) := (
+        match e1 with
+            | (const m) := (
+                match e2 with
+                    | (const n) := (
+                        have h : simp_const (plus (const m) (const n)) = const (m + n), from rfl,
+                        calc
+                            aeval v (simp_const (plus (const m) (const n))) = aeval v (const (m + n)) : by rw [h]
+                                ... = aeval v (plus (const m) (const n)) : rfl
+                    )
+                    | (var n) := rfl
+                    | (plus e1 e2) := rfl
+                    | (times e1 e2) := rfl
+                end
+            )
+            | (var n) := rfl
+            | (plus _ _) := rfl
+            | (times _ _) := rfl
+        end
+    )
+    | (times e1 e2) := (
+        match e1 with
+            | (const m) := (
+                match e2 with
+                    | (const n) := (
+                        have h : simp_const (times (const m) (const n)) = const (m * n), from rfl,
+                        calc
+                            aeval v (simp_const (times (const m) (const n))) = aeval v (const (m * n)) : by rw [h]
+                                ... = aeval v (times (const m) (const n)) : rfl
+                    )
+                    | (var n) := rfl
+                    | (plus e1 e2) := rfl
+                    | (times e1 e2) := rfl
+                end
+            )
+            | (var n) := rfl
+            | (plus _ _) := rfl
+            | (times _ _) := rfl
+        end
+    )
+
+    def fuse : aexpr → aexpr
+    | (plus (const n1) (const n2)) := simp_const (plus (const n1) (const n2))
+    | (times (const n1) (const n2)) := simp_const (times (const n1) (const n2))
+    | (plus e1 e2) := plus (fuse e1) (fuse e2)
+    | (times e1 e2) := times (fuse e1) (fuse e2)
+    | e := e
+
+    -- This is very repetitive, but I think we need metaprogramming or custom
+    -- tactics to address this.
+    theorem fuse_eq (v : ℕ → ℕ) :
+    ∀ e : aexpr, aeval v (fuse e) = aeval v e :=
+    begin
+        intro e,
+        induction e,
+            case const
+            { reflexivity },
+            case var
+            { reflexivity },
+            case plus : a b iha ihb
+            { cases a,
+              cases b,
+                reflexivity,
+                reflexivity,
+                {
+                    exact calc
+                    aeval v (fuse (plus (const a) (plus b_a b_a_1))) = aeval v (plus (fuse (const a)) (fuse (plus b_a b_a_1))) : rfl
+                        ... = aeval v (fuse (const a)) + aeval v (fuse (plus b_a b_a_1)) : rfl
+                        ... = aeval v (const a) + aeval v (plus b_a b_a_1) : by rw [iha, ihb]
+                        ... = aeval v (plus (const a) (plus b_a b_a_1)) : rfl
+                },
+                {
+                    exact calc
+                    aeval v (fuse (plus (const a) (times b_a b_a_1))) = aeval v (plus (fuse (const a)) (fuse (times b_a b_a_1))) : rfl
+                        ... = aeval v (fuse (const a)) + aeval v (fuse (times b_a b_a_1)) : rfl
+                        ... = aeval v (const a) + aeval v (times b_a b_a_1) : by rw [iha, ihb]
+                        ... = aeval v (plus (const a) (times b_a b_a_1)) : rfl
+                },
+                {
+                    exact calc
+                        aeval v (fuse (plus (var a) b)) = aeval v (plus (fuse (var a)) (fuse b)) : rfl
+                            ... = aeval v (fuse (var a)) + aeval v (fuse b) : rfl
+                            ... = aeval v (var a) + aeval v b : by rw [iha, ihb]
+                            ... = aeval v (plus (var a) b) : rfl
+                },
+                {
+                    exact calc
+                        aeval v (fuse (plus (plus a_a a_a_1) b)) = aeval v (plus (fuse (plus a_a a_a_1)) (fuse b)) : rfl
+                            ... = aeval v (fuse (plus a_a a_a_1)) + aeval v (fuse b) : rfl
+                            ... = aeval v (plus a_a a_a_1) + aeval v b : by rw [iha, ihb]
+                            ... = aeval v (plus (plus a_a a_a_1) b) : rfl
+                },
+                {
+                    exact calc
+                        aeval v (fuse (plus (times a_a a_a_1) b)) = aeval v (plus (fuse (times a_a a_a_1)) (fuse b)) : rfl
+                            ... = aeval v (fuse (times a_a a_a_1)) + aeval v (fuse b) : rfl
+                            ... = aeval v (times a_a a_a_1) + aeval v b : by rw [iha, ihb]
+                            ... = aeval v (plus (times a_a a_a_1) b) : rfl
+                },
+            },
+            case times : a b iha ihb
+            { cases a,
+              cases b,
+                reflexivity,
+                reflexivity,
+                {
+                    exact calc
+                    aeval v (fuse (times (const a) (plus b_a b_a_1))) = aeval v (times (fuse (const a)) (fuse (plus b_a b_a_1))) : rfl
+                        ... = aeval v (fuse (const a)) * aeval v (fuse (plus b_a b_a_1)) : rfl
+                        ... = aeval v (const a) * aeval v (plus b_a b_a_1) : by rw [iha, ihb]
+                        ... = aeval v (times (const a) (plus b_a b_a_1)) : rfl
+                },
+                {
+                    exact calc
+                    aeval v (fuse (times (const a) (times b_a b_a_1))) = aeval v (times (fuse (const a)) (fuse (times b_a b_a_1))) : rfl
+                        ... = aeval v (fuse (const a)) * aeval v (fuse (times b_a b_a_1)) : rfl
+                        ... = aeval v (const a) * aeval v (times b_a b_a_1) : by rw [iha, ihb]
+                        ... = aeval v (times (const a) (times b_a b_a_1)) : rfl
+                },
+                {
+                    exact calc
+                        aeval v (fuse (times (var a) b)) = aeval v (times (fuse (var a)) (fuse b)) : rfl
+                            ... = aeval v (fuse (var a)) * aeval v (fuse b) : rfl
+                            ... = aeval v (var a) * aeval v b : by rw [iha, ihb]
+                            ... = aeval v (times (var a) b) : rfl
+                },
+                {
+                    exact calc
+                        aeval v (fuse (times (plus a_a a_a_1) b)) = aeval v (times (fuse (plus a_a a_a_1)) (fuse b)) : rfl
+                            ... = aeval v (fuse (plus a_a a_a_1)) * aeval v (fuse b) : rfl
+                            ... = aeval v (plus a_a a_a_1) * aeval v b : by rw [iha, ihb]
+                            ... = aeval v (times (plus a_a a_a_1) b) : rfl
+                },
+                {
+                    exact calc
+                        aeval v (fuse (times (times a_a a_a_1) b)) = aeval v (times (fuse (times a_a a_a_1)) (fuse b)) : rfl
+                            ... = aeval v (fuse (times a_a a_a_1)) * aeval v (fuse b) : rfl
+                            ... = aeval v (times a_a a_a_1) * aeval v b : by rw [iha, ihb]
+                            ... = aeval v (times (times a_a a_a_1) b) : rfl
+                },
+            },
+    end
+
+end chap8ex6
